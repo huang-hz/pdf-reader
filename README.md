@@ -36,7 +36,7 @@ The agent then reads `full.md`, resolves "Figure N" to its image via the caption
 Clone into your agent's skills directory — e.g. for Claude Code:
 
 ```bash
-git clone https://github.com/huang-hz/pdf-reader-mineru.git ~/.claude/skills/pdf-reader
+git clone https://github.com/huang-hz/pdf-reader.git ~/.claude/skills/pdf-reader
 ```
 
 ## Setup
