@@ -32,17 +32,17 @@
 
 ## Install
 
-Skills (Claude Code and Codex) — on Windows:
+**With an agent:** give your agent this repo's URL and ask it to install the skills — cloning the repo and linking each `skills/<name>` directory into your skills directory is routine for Claude Code / Codex.
 
-```powershell
-.\install.ps1
+**By hand:**
+
+```bash
+git clone https://github.com/huang-hz/paseoweb4scholar.git
 ```
 
-This symlinks each directory under `skills/` into `~/.claude/skills/` and `~/.codex/skills/`. Existing symlinks are refreshed; real directories are left untouched with a warning.
+then link or copy each `skills/<name>` directory into your agent's skills directory (`~/.claude/skills/` for Claude Code, `~/.codex/skills/` for Codex). Prefer links over copies so `git pull` propagates updates. On Windows, symbolic links need elevation or Developer Mode; directory junctions do not (`New-Item -ItemType Junction`).
 
-Manual equivalent on any platform: link or copy each `skills/<name>` directory into your agent's skills directory.
-
-Userscript: import [`userscripts/paseo-web-latex-renderer/paseo-web-latex-renderer.user.js`](userscripts/paseo-web-latex-renderer/paseo-web-latex-renderer.user.js) into Tampermonkey.
+**Userscript:** import [`userscripts/paseo-web-latex-renderer/paseo-web-latex-renderer.user.js`](userscripts/paseo-web-latex-renderer/paseo-web-latex-renderer.user.js) into Tampermonkey.
 
 `pdf-reader` additionally needs a MinerU API token — see [its README](skills/pdf-reader/README.md#setup).
 
