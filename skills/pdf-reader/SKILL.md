@@ -29,13 +29,21 @@ python3 "<skill-directory>/scripts/pdf_to_md.py" "<path-to.pdf>"
 
 Use another available Python 3 launcher, such as `python` or `py -3`, if `python3` is unavailable.
 
-If `<pdf-directory>/<pdf-stem>_mineru/full.md` already exists, reuse it only when it is newer than the source PDF and its provenance can be verified as belonging to that PDF. If the PDF changed or its provenance is uncertain, convert into a fresh `--out` directory.
+If `<pdf-directory>/<pdf-stem>_mineru/full.md` already exists, reuse it only when it is nonempty, newer than the source PDF, and its provenance can be verified as belonging to that PDF. A pre-existing or newly created `*_mineru/` directory alone is never a successful conversion. If the PDF changed, the output is incomplete, or its provenance is uncertain, convert into a fresh `--out` directory.
 
 - Progress goes to stderr.
 - The last stdout line is the extracted Markdown path.
 - Output defaults to `<pdf-directory>/<pdf-stem>_mineru/`.
 - Pass `--out <directory>` to override the output location.
 - Typical conversion takes 30 seconds to 3 minutes. The default timeout is 900 seconds.
+
+### Keep conversion exclusive
+
+Treat MinerU conversion as an exclusive phase for the target PDF. Run the command in the foreground. If the environment requires a background process, poll that same process until it exits.
+
+While MinerU is running, do not start a fallback extractor (`pdftotext`, PyMuPDF, OCR, or another converter), render pages, analyze images, or delegate PDF reading for that PDF. Do not infer failure from normal elapsed time or from the existence of an output directory.
+
+After a zero exit status, validate the artifact before reading: `full.md` must be nonempty, the expected block metadata (`*_content_list.json`) must be present, and the artifact must belong to the source PDF. Use a lower-fidelity fallback only after MinerU exits with an error, reaches its timeout, or fails this validation.
 
 3. Report the artifact location before reading. Keep the report to one or two sentences; for example: "PDF conversion completed. The reusable material is at `<output-directory>` (`full.md`, `images/`, and block metadata)."
 
@@ -46,7 +54,7 @@ If `<pdf-directory>/<pdf-stem>_mineru/full.md` already exists, reuse it only whe
 - Base claims on the document, not prior knowledge. Cite sections or page indices when useful.
 - For broad requests, organize the answer as problem, key ideas, method, and results, using the document's own numbers.
 - For questions specifically about a figure, inspect the figure crop when image viewing is available.
-- Before quoting a formula or pseudocode verbatim, verify any transcription that appears suspicious against the corresponding crop when image viewing is available. If visual verification is unavailable, say so rather than guessing.
+- Read formulas from `full.md` by default. Inspect a formula crop only when an explicit extraction anomaly relevant to the answer could change its meaning or conclusion. Examples include malformed or unbalanced LaTeX, a broken number/subscript/exponent/fraction token (such as a denominator rendered as `1 2`), a missing or truncated equation, or a conflict in the extracted material. Locate the exact equation entry through the content-list JSON and inspect the smallest crop that resolves that anomaly. If visual verification is unavailable, state the uncertainty rather than guessing.
 
 ## Output Layout
 
@@ -60,9 +68,9 @@ MinerU may include additional files. Treat `full.md`, `images/`, and the content
 
 Figure image filenames are hashes. Search `full.md` for a figure caption using any available text-search tool (`rg`, `grep`, or the client's search tool). The image reference associated with that caption identifies the file under `images/`.
 
-Answer questions about equations and tables from `full.md` first. Use `*_content_list.json` to locate verification crops by `type`, `page_idx`, and `img_path`. Equation crops are usually wide and short.
+Answer questions about equations and tables from `full.md` first. Use `*_content_list.json` to locate verification crops by `type`, `page_idx`, and `img_path`; apply the explicit anomaly gate above before opening an equation crop. Equation crops are usually wide and short.
 
-MinerU can occasionally omit characters such as `<<` or `>>`, or confuse visually similar characters such as `BF16` and `BFl6` in dense formulas or tables. When exact text matters, consult the corresponding crop rather than guessing.
+MinerU can occasionally omit characters such as `<<` or `>>`, or confuse visually similar characters such as `BF16` and `BFl6` in dense formulas or tables. Treat a detected occurrence that affects the answer as an extraction anomaly and consult the corresponding crop rather than guessing.
 
 ## API Token
 
