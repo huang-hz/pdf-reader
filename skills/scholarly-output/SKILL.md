@@ -32,7 +32,10 @@ Derived from the renderer; see `COMPATIBILITY.md` at the repository root for the
 
 The chat pipeline parses Markdown before the renderer ever sees the text:
 
-- Never place a line consisting only of `=` characters directly under text or a formula — Markdown reads it as a Setext heading underline and consumes the line above.
+- **No lone-operator lines inside math.** Never let a line inside a `$$` block consist only of `=` or `-` characters. Markdown reads such a line as a Setext heading underline: it consumes the line above, splits the `$$` block, and unescapes `\{` to `{` in the broken pieces — the renderer then receives corrupted source like `\left{` and fails even though your LaTeX was valid. Attach the operator to an adjacent line instead:
+  - Bad: `\mathcal Z(T_r,\mathbf s^*)` / `=` / `\left\{` on three lines
+  - Good: `\mathcal Z(T_r,\mathbf s^*) =` / `\left\{`
+- Outside math, never place a line consisting only of `=` or `-` directly under text either — the same Setext rule consumes the line above.
 - Prefer `\cdot` or `\times` over a bare `*` adjacent to letters, which Markdown can parse as emphasis.
 - Fenced code blocks are never scanned for math — the safe place for literal LaTeX source.
 
@@ -55,4 +58,4 @@ cat draft.md | python3 "<skill-directory>/scripts/lint_latex.py"
 
 Resolve `<skill-directory>` as the directory containing this `SKILL.md`; never hard-code an installation path. Use another Python 3 launcher (`python`, `py -3`) if `python3` is unavailable.
 
-The linter extracts math spans (skipping code blocks, as the renderer does) and flags the failure modes above: `\left{`-class delimiter errors, unescaped `%`, bare `&`, inline `\tag`, unsupported commands and environments, unbalanced braces, Setext hazards. When Node.js with the `katex` package is installed, it additionally renders every formula with `throwOnError` enabled for ground truth; otherwise it reports rule-based results only. Fix every error before sending.
+The linter extracts math spans (skipping code blocks, as the renderer does) and flags the failure modes above: `\left{`-class delimiter errors, unescaped `%`, bare `&`, inline `\tag`, unsupported commands and environments, unbalanced braces, Setext hazards. A Setext line **inside** a formula is an error (it corrupts what the renderer receives); outside a formula it is a warning. When Node.js with the `katex` package is installed, it additionally renders every formula with `throwOnError` enabled for ground truth; otherwise it reports rule-based results only. Fix every error before sending.

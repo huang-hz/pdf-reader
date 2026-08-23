@@ -187,10 +187,20 @@ def main():
         prev_end = match.start() - 1
         if prev_end >= 0 and text[:match.start()].rstrip("\n") and \
                 text[:match.start()].rstrip("\n")[-1] != "\n":
-            add(line_of(text, match.start()), "warning",
-                "line of only '=' or '-': Markdown reads it as a Setext "
-                "heading underline and consumes the previous line",
-                match.group(0))
+            in_math = any(s["start"] <= match.start() < s["end"]
+                          for s in spans)
+            if in_math:
+                add(line_of(text, match.start()), "error",
+                    "lone '=' / '-' line inside a formula: Markdown consumes "
+                    "it as a Setext heading underline, splits the block, and "
+                    "unescapes \\{ to { — the renderer then fails on the "
+                    "corrupted source; attach the operator to an adjacent line",
+                    match.group(0))
+            else:
+                add(line_of(text, match.start()), "warning",
+                    "line of only '=' or '-': Markdown reads it as a Setext "
+                    "heading underline and consumes the previous line",
+                    match.group(0))
 
     results = katex_render(spans)
     if results is None:
