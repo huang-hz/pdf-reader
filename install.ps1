@@ -17,13 +17,18 @@ Get-ChildItem (Join-Path $root "skills") -Directory | ForEach-Object {
             $item = Get-Item $link -Force
             if ($item.LinkType) {
                 # Remove the link itself, never the target.
-                cmd /c rmdir "$link" | Out-Null
+                [System.IO.Directory]::Delete($link)
             } else {
                 Write-Warning "$link is a real directory; leaving it untouched."
                 continue
             }
         }
-        New-Item -ItemType SymbolicLink -Path $link -Target $source | Out-Null
+        try {
+            New-Item -ItemType SymbolicLink -Path $link -Target $source -ErrorAction Stop | Out-Null
+        } catch [System.UnauthorizedAccessException] {
+            # Symlinks need elevation or Developer Mode; junctions do not.
+            New-Item -ItemType Junction -Path $link -Target $source | Out-Null
+        }
         Write-Host "linked $link -> $source"
     }
 }
