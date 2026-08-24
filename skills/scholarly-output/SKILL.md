@@ -36,6 +36,8 @@ The chat pipeline parses Markdown before the renderer ever sees the text:
   - Bad: `\mathcal Z(T_r,\mathbf s^*)` / `=` / `\left\lbrace` on three lines
   - Good: `\mathcal Z(T_r,\mathbf s^*) =` / `\left\lbrace`
 - For a short or medium display formula, keep all math on one physical line between the `$$` delimiters. Do not reflow it for prose readability before sending. Use a KaTeX `aligned` block only when a multiline formula is genuinely necessary.
+- **Use `\cr`, never `\\`, to separate rows inside `aligned`, `cases`, `gathered`, `split`, or `array` environments.** The performance-oriented renderer normally reads Markdown's DOM text, where Markdown reduces `\\` to `\`; the next row then becomes an invalid control sequence such as `\s`, `\u`, or `\1`. KaTeX 0.16 supports `\cr`, and Markdown preserves it. Keep the environment in one display block, for example: `$$\begin{cases}0,&t<T_r,\cr 1,&t\ge T_r.\end{cases}$$`.
+- Do not compensate with four backslashes. It makes copied LaTeX ambiguous and is unnecessary with `\cr`.
 - Outside math, never place a line consisting only of `=` or `-` directly under text either — the same Setext rule consumes the line above.
 - Prefer `\cdot` or `\times` over a bare `*` adjacent to letters, which Markdown can parse as emphasis.
 - Fenced code blocks are never scanned for math — the safe place for literal LaTeX source.

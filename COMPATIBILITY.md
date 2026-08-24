@@ -8,5 +8,6 @@ row here.
 
 | scholarly-output rules | Userscript | KaTeX | Snapshot covers |
 | --- | --- | --- | --- |
-| v2 (current) | v2.3.4 | 0.16.21 | Same renderer as v1; scholarly output now prevents Markdown transport loss at the source by preferring `\lbrace` / `\rbrace` and prohibiting lone operator lines; `throwOnError: false`, `strict: "ignore"`, `trust: false` |
+| v3 (current) | v2.3.4 | 0.16.21 | v2 rules plus `\cr` rather than `\\` for rows in `aligned`/`cases`-style environments. This avoids Markdown reducing a row separator before rendering while React raw-source recovery remains disabled by default for long-conversation performance. |
+| v2 | v2.3.4 | 0.16.21 | Same renderer as v1; scholarly output now prevents Markdown transport loss at the source by preferring `\lbrace` / `\rbrace` and prohibiting lone operator lines; `throwOnError: false`, `strict: "ignore"`, `trust: false` |
 | v1 | v2.3.4 | 0.16.21 | Delimiter set (`$$`/`\[...\]` display, `$...$`/`\(...\)` inline); standalone-`$$` display rule; inline math heuristic; `\tag` forces display; `normalizeLatex` fixes (`1.56%`, `\ &\`); `{\color...}` raw-source-block skip; `throwOnError: false`, `strict: "ignore"`, `trust: false` |
