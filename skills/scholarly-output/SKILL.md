@@ -35,10 +35,11 @@ The chat pipeline parses Markdown before the renderer ever sees the text:
 - **No lone-operator lines inside math.** Never let a line inside a `$$` block consist only of `=` or `-` characters. Markdown reads such a line as a Setext heading underline: it consumes the line above and splits the formula. Attach the operator to an adjacent line instead:
   - Bad: `\mathcal Z(T_r,\mathbf s^*)` / `=` / `\left\lbrace` on three lines
   - Good: `\mathcal Z(T_r,\mathbf s^*) =` / `\left\lbrace`
-- For a short or medium display formula, keep all math on one physical line between the `$$` delimiters. Do not reflow it for prose readability after linting. Use a KaTeX `aligned` block only when a multiline formula is genuinely necessary.
+- For a short or medium display formula, keep all math on one physical line between the `$$` delimiters. Do not reflow it for prose readability before sending. Use a KaTeX `aligned` block only when a multiline formula is genuinely necessary.
 - Outside math, never place a line consisting only of `=` or `-` directly under text either — the same Setext rule consumes the line above.
 - Prefer `\cdot` or `\times` over a bare `*` adjacent to letters, which Markdown can parse as emphasis.
 - Fenced code blocks are never scanned for math — the safe place for literal LaTeX source.
+- Apply these constraints directly while composing the final answer; do not add a separate formatting-validation tool call.
 
 ## Tables, Pseudocode, Citations (convention layer)
 
@@ -47,16 +48,3 @@ The chat pipeline parses Markdown before the renderer ever sees the text:
 - Citing the source document: anchor claims as `(Section 4.2)`, `(Figure 6)`, `(Table 3)`, adding a page index when useful. These anchors match the pdf-reader skill's output layout so the user can trace every claim back to the material.
 - Quoting a formula from a parsed PDF: quote the source exactly. If a transcription looks suspicious (dropped `<<` / `>>`, confusions like `BF16` vs `BFl6`), verify against the corresponding crop first — see the pdf-reader skill.
 - Terminology: on first use give the bilingual pair (e.g. 量化缩放因子 / quantization scale), then stay consistent.
-
-## Self-check Before Sending
-
-When a reply contains non-trivial math, lint the **exact final Markdown** first:
-
-```text
-python3 "<skill-directory>/scripts/lint_latex.py" draft.md
-cat draft.md | python3 "<skill-directory>/scripts/lint_latex.py"
-```
-
-Resolve `<skill-directory>` as the directory containing this `SKILL.md`; never hard-code an installation path. Use another Python 3 launcher (`python`, `py -3`) if `python3` is unavailable. Do not lint a separately assembled formula list: the lint input must contain the same math blocks and line breaks that will be sent. If writing a draft file is unavailable, pipe the exact final Markdown to the linter; after it passes, do not reflow or edit its formulas.
-
-The linter extracts math spans (skipping code blocks, as the renderer does) and flags the failure modes above: bare `\left{`-class delimiter errors, Markdown-fragile `\left\{` / `\right\}` spellings, unescaped `%`, bare `&`, inline `\tag`, unsupported commands and environments, unbalanced braces, Setext hazards. A Setext line **inside** a formula is an error (it corrupts what the renderer receives); outside a formula it is a warning. When Node.js with the `katex` package is installed, it additionally renders every formula with `throwOnError` enabled for ground truth; otherwise it reports rule-based results only. Fix every error before sending.

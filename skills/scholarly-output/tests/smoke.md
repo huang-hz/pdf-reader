@@ -36,10 +36,24 @@ Setext hazard below this line:
 \left{ inside a fenced code block must be ignored }
 ```
 
-## Case 4: Markdown-brace transport (first block must error; second must pass)
+## Case 4: the 2026-08-23 failure — lone `=` inside display math (must error)
 
-`\left\{` is valid TeX but Paseo Markdown can consume its brace escape before
-the renderer reads DOM text. Prefer the delimiter macros in the safe rewrite.
+The stored model source had `\left\{` correct, but the lone `=` line let
+Markdown split the block and unescape `\{`, so the renderer received `\left{`.
+
+$$
+\mathcal V_z=[-Z,Z]^T,
+\qquad
+\mathcal Z(T_r,\mathbf s^*)
+=
+\left\{
+\mathbf z\in\mathcal V_z
+\mid
+s[t+T_r]=s^*[t],\ \forall t
+\right\}.
+$$
+
+Safe rewrite with the operator attached (must pass):
 
 $$
 \mathcal V_z=[-Z,Z]^T,
@@ -50,27 +64,4 @@ $$
 \mid
 s[t+T_r]=s^*[t],\ \forall t
 \right\}.
-$$
-
-Safe rewrite (must pass):
-
-$$
-\mathcal V_z=[-Z,Z]^T,
-\qquad
-\mathcal Z(T_r,\mathbf s^*) =
-\left\lbrace
-\mathbf z\in\mathcal V_z
-\mid
-s[t+T_r]=s^*[t],\ \forall t
-\right\rbrace.
-$$
-
-## Case 5: lone `=` inside display math (must error)
-
-$$
-\mathcal C_T
-=
-\left\lbrace
-\theta k\ \middle|\ k=0,1,\ldots,2^T-1
-\right\rbrace.
 $$
