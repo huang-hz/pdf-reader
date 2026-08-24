@@ -7,7 +7,7 @@ description: Output-format discipline for scholarly work — formulas, tables, p
 
 Rules for producing scholarly answers that render correctly and stay faithful to the source.
 
-The rendering surface is KaTeX 0.16 delivered by the paseo-web-latex-renderer userscript (v2.3.4), with `throwOnError: false`: invalid LaTeX does not degrade gracefully — it appears as red raw source in the chat. What you write is also what the user copies, so the source text is the product.
+The rendering surface is KaTeX 0.16 delivered by the paseo-web-latex-renderer userscript (v2.3.5), with `throwOnError: false`: invalid LaTeX does not degrade gracefully — it appears as red raw source in the chat. What you write is also what the user copies, so the source text is the product.
 
 ## Formula Rules (render layer)
 
@@ -32,10 +32,24 @@ Derived from the renderer; see `COMPATIBILITY.md` at the repository root for the
 
 The chat pipeline parses Markdown before the renderer ever sees the text:
 
-- **No lone-operator lines inside math.** Never let a line inside a `$$` block consist only of `=` or `-` characters. Markdown reads such a line as a Setext heading underline: it consumes the line above and splits the formula. Attach the operator to an adjacent line instead:
-  - Bad: `\mathcal Z(T_r,\mathbf s^*)` / `=` / `\left\lbrace` on three lines
-  - Good: `\mathcal Z(T_r,\mathbf s^*) =` / `\left\lbrace`
-- For a short or medium display formula, keep all math on one physical line between the `$$` delimiters. Do not reflow it for prose readability before sending. Use a KaTeX `aligned` block only when a multiline formula is genuinely necessary.
+- **Hard block-math transport invariant (highest priority).** For every short or medium display equation, use exactly three physical source lines: opening `$$`, one complete equation line, closing `$$`. Do not visually reflow the equation. In particular, never put `=`, `-`, `+`, `\le`, `\ge`, or any relation/operator token on a line by itself, or directly before/after a line break. Markdown can consume a lone `=` as a Setext heading underline before KaTeX receives the formula.
+  - Required form:
+    ```text
+    $$
+    I(z)=0\cdot4+0\cdot2+4\cdot1=4.
+    $$
+    ```
+  - Forbidden form — it loses the equalities in Paseo Markdown:
+    ```text
+    $$
+    I(z)
+    =
+    0\cdot4+0\cdot2+4\cdot1
+    =
+    4.
+    $$
+    ```
+- If a derivation genuinely needs multiple visual rows, keep the entire environment on that one interior source line and use `\cr` for its rows, for example: `$$\begin{aligned}I(z)&=0\cdot4+0\cdot2+4\cdot1\cr &=4.\end{aligned}$$`. Never use actual source line breaks to align equality signs.
 - **Use `\cr`, never `\\`, to separate rows inside `aligned`, `cases`, `gathered`, `split`, or `array` environments.** The performance-oriented renderer normally reads Markdown's DOM text, where Markdown reduces `\\` to `\`; the next row then becomes an invalid control sequence such as `\s`, `\u`, or `\1`. KaTeX 0.16 supports `\cr`, and Markdown preserves it. Keep the environment in one display block, for example: `$$\begin{cases}0,&t<T_r,\cr 1,&t\ge T_r.\end{cases}$$`.
 - Do not compensate with four backslashes. It makes copied LaTeX ambiguous and is unnecessary with `\cr`.
 - Outside math, never place a line consisting only of `=` or `-` directly under text either — the same Setext rule consumes the line above.
