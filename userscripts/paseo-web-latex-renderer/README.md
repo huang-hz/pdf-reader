@@ -6,7 +6,7 @@
 
 **Render raw LaTeX formulas in Paseo Web as MathML and copy them back as original LaTeX**
 
-[![Version](https://img.shields.io/badge/version-2.3.4-blue)](./paseo-web-latex-renderer.user.js)
+[![Version](https://img.shields.io/badge/version-2.3.5-blue)](./paseo-web-latex-renderer.user.js)
 [![Tampermonkey](https://img.shields.io/badge/Tampermonkey-required-brightgreen)](https://www.tampermonkey.net/)
 [![KaTeX](https://img.shields.io/badge/KaTeX-0.16.21-orange)](https://katex.org/)
 
@@ -24,6 +24,7 @@
 | 检测带 \tag 或 \tag* 的公式，并按显示公式处理 | Detects equations using \tag or \tag* and handles them as display math |
 | 处理被 Paseo 拆分到多个文本节点或页面块中的公式 | Handles formulas split across multiple text nodes or page blocks |
 | 支持动态加载内容、开放 Shadow DOM 与同源 iframe | Supports dynamic content, open Shadow DOM, and same-origin iframes |
+| 仅渲染 assistant 输出，保留用户输入的原始 LaTeX | Renders assistant output only and preserves user-authored LaTeX source |
 | 复制公式或包含公式的文字时，恢复原始 LaTeX 源码 | Restores original LaTeX when copying formulas or surrounding text |
 | 针对长对话优化，优先保持页面流畅 | Optimized for long conversations to keep pages responsive |
 | 提供诊断与手动重新扫描菜单 | Includes diagnostic and manual rescan menu commands |
@@ -48,7 +49,7 @@ The script matches:
 
 ## 使用 / Usage
 
-打开 Paseo 页面后，原始公式会自动渲染。例如：
+打开 Paseo 页面后，assistant 回复中的原始公式会自动渲染；用户消息保留原始 LaTeX 以避免干扰发送内容。例如：
 
     Inline: $v_{ij} = x_i \cdot SF$
 
@@ -56,7 +57,7 @@ The script matches:
 
 句内的双美元公式会保持在正文行内；单独成行的公式会以显示公式排版。带 \tag{16} 的公式会按编号公式处理。
 
-Raw formulas render automatically after the page opens. Sentence-embedded double-dollar formulas stay inline, while standalone formulas use display layout. Equations with \tag{16} are handled as numbered display equations.
+Raw formulas in assistant replies render automatically after the page opens, while user-authored LaTeX remains source text. Sentence-embedded double-dollar formulas stay inline, while standalone formulas use display layout. Equations with \tag{16} are handled as numbered display equations.
 
 选中并复制公式或包含公式的文字，粘贴时会得到原始 LaTeX，而不是 MathML 或视觉字符。
 
@@ -94,12 +95,12 @@ On very long conversations, off-screen formulas may temporarily remain as raw La
 ## 兼容性与限制 / Compatibility and Limitations
 
 - 推荐使用最新版 Microsoft Edge 或 Google Chrome。
-- 代码块、输入框和正在编辑的内容不会被处理。
+- 代码块、用户消息、输入框和正在编辑的内容不会被处理。
 - 关闭模式的 Shadow DOM、无法访问的跨域 iframe，以及图片或 Canvas 中的公式无法处理。
 - KaTeX 不是完整 TeX 引擎，少数宏或环境可能不受支持。
 
 - Recent Microsoft Edge and Google Chrome are recommended.
-- Code blocks, inputs, and editable content are intentionally skipped.
+- Code blocks, user messages, inputs, and editable content are intentionally skipped.
 - Closed Shadow DOM, inaccessible cross-origin iframes, and formulas rendered as images or Canvas cannot be processed.
 - KaTeX is not a complete TeX engine; some macros or environments may not be supported.
 

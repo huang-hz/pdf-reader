@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Paseo Web LaTeX Renderer
 // @namespace    local.paseo.latex
-// @version      2.3.4
+// @version      2.3.5
 // @description  Render LaTeX in Paseo and copy formulas as source LaTeX.
 // @match        https://app.paseo.sh/*
 // @match        https://*.paseo.sh/*
@@ -342,9 +342,27 @@
     return false;
   }
 
+  function assistantMessageFor(element) {
+    for (let current = element; current; ) {
+      const message = current.closest?.(ASSISTANT_MESSAGE_SELECTOR);
+      if (message) return message;
+
+      const root = current.getRootNode?.();
+      if (!root?.host || root === current) return null;
+      current = root.host;
+    }
+
+    return null;
+  }
+
+  function isAssistantMessageContent(element) {
+    return Boolean(assistantMessageFor(element));
+  }
+
   function shouldIgnore(textNode) {
     const parent = textNode.parentElement;
     return !parent ||
+      !isAssistantMessageContent(parent) ||
       Boolean(parent.closest(IGNORE_SELECTOR)) ||
       isRawLatexSourceContext(parent);
   }
@@ -504,8 +522,12 @@
 
   function collectAssistantMessages(root) {
     const messages = new Set();
-    const element = root.nodeType === 3 ? root.parentElement : root;
-    const closest = element?.closest?.(ASSISTANT_MESSAGE_SELECTOR);
+    const element = root.nodeType === 3
+      ? root.parentElement
+      : root.nodeType === 11
+        ? root.host
+        : root;
+    const closest = assistantMessageFor(element);
 
     if (closest) messages.add(closest);
     if (element?.matches?.(ASSISTANT_MESSAGE_SELECTOR)) messages.add(element);
@@ -681,23 +703,35 @@
       return candidates;
     }
 
-    const doc = root.ownerDocument || root;
-    const nodeFilter = doc.defaultView?.NodeFilter || NodeFilter;
-    let walker;
+    const element = root.nodeType === 1
+      ? root
+      : root.nodeType === 11
+        ? root.host
+        : null;
+    const scanRoots = isAssistantMessageContent(element)
+      ? [root]
+      : [...(root.querySelectorAll?.(ASSISTANT_MESSAGE_SELECTOR) || [])];
 
-    try {
-      walker = doc.createTreeWalker(root, nodeFilter.SHOW_TEXT, {
-        acceptNode(node) {
-          return isOwnedNode(node) || shouldIgnore(node) || !/[$\\]/.test(node.nodeValue)
-            ? nodeFilter.FILTER_REJECT
-            : nodeFilter.FILTER_ACCEPT;
-        }
-      });
-    } catch (_) {
-      return candidates;
+    for (const scanRoot of scanRoots) {
+      const doc = scanRoot.ownerDocument || scanRoot;
+      const nodeFilter = doc.defaultView?.NodeFilter || NodeFilter;
+      let walker;
+
+      try {
+        walker = doc.createTreeWalker(scanRoot, nodeFilter.SHOW_TEXT, {
+          acceptNode(node) {
+            return isOwnedNode(node) || shouldIgnore(node) || !/[$\\]/.test(node.nodeValue)
+              ? nodeFilter.FILTER_REJECT
+              : nodeFilter.FILTER_ACCEPT;
+          }
+        });
+      } catch (_) {
+        continue;
+      }
+
+      while (walker.nextNode()) candidates.push(walker.currentNode);
     }
 
-    while (walker.nextNode()) candidates.push(walker.currentNode);
     return candidates;
   }
 
@@ -882,7 +916,7 @@
 
   function lazyTargetFor(node) {
     const element = node.parentElement;
-    return element?.closest?.(ASSISTANT_MESSAGE_SELECTOR) ||
+    return assistantMessageFor(element) ||
       closestFormulaBlock(element) ||
       element ||
       null;
