@@ -21,7 +21,7 @@ Derived from the renderer; see `COMPATIBILITY.md` at the repository root for the
 
 ### KaTeX-safe LaTeX
 
-- `\left` and `\right` must pair, and the token immediately after each must be a valid delimiter. Visible braces need escaping: `\left\{ ... \right\}`. `\left{` is a syntax error — a bare `{` is a grouping character, not a delimiter. Use `\left. ... \right\}` for a one-sided delimiter.
+- `\left` and `\right` must pair, and the token immediately after each must be a valid delimiter. For visible braces, prefer `\left\lbrace ... \right\rbrace` (or `\left. ... \right\rbrace` on one side). `\left{` is a syntax error — a bare `{` is a grouping character, not a delimiter. Although `\left\{ ... \right\}` is valid TeX, Paseo Markdown can consume the brace escape before DOM rendering; source output must use `\lbrace` / `\rbrace` instead.
 - Escape percent as `\%` inside math. The renderer auto-fixes `1.56%`, but do not rely on it.
 - A bare `&` is invalid outside an alignment environment (`aligned`, `gathered`, `cases`, `split`, `array`, `matrix` and its variants). Use an environment, or `\mathbin{\&}` for a literal ampersand operator.
 - Multi-character sub/superscripts need braces: `x_{ij}`, not `x_ij`.
@@ -32,9 +32,10 @@ Derived from the renderer; see `COMPATIBILITY.md` at the repository root for the
 
 The chat pipeline parses Markdown before the renderer ever sees the text:
 
-- **No lone-operator lines inside math.** Never let a line inside a `$$` block consist only of `=` or `-` characters. Markdown reads such a line as a Setext heading underline: it consumes the line above, splits the `$$` block, and unescapes `\{` to `{` in the broken pieces — the renderer then receives corrupted source like `\left{` and fails even though your LaTeX was valid. Attach the operator to an adjacent line instead:
-  - Bad: `\mathcal Z(T_r,\mathbf s^*)` / `=` / `\left\{` on three lines
-  - Good: `\mathcal Z(T_r,\mathbf s^*) =` / `\left\{`
+- **No lone-operator lines inside math.** Never let a line inside a `$$` block consist only of `=` or `-` characters. Markdown reads such a line as a Setext heading underline: it consumes the line above and splits the formula. Attach the operator to an adjacent line instead:
+  - Bad: `\mathcal Z(T_r,\mathbf s^*)` / `=` / `\left\lbrace` on three lines
+  - Good: `\mathcal Z(T_r,\mathbf s^*) =` / `\left\lbrace`
+- For a short or medium display formula, keep all math on one physical line between the `$$` delimiters. Do not reflow it for prose readability after linting. Use a KaTeX `aligned` block only when a multiline formula is genuinely necessary.
 - Outside math, never place a line consisting only of `=` or `-` directly under text either — the same Setext rule consumes the line above.
 - Prefer `\cdot` or `\times` over a bare `*` adjacent to letters, which Markdown can parse as emphasis.
 - Fenced code blocks are never scanned for math — the safe place for literal LaTeX source.
@@ -49,13 +50,13 @@ The chat pipeline parses Markdown before the renderer ever sees the text:
 
 ## Self-check Before Sending
 
-When a reply contains non-trivial math, lint the draft first:
+When a reply contains non-trivial math, lint the **exact final Markdown** first:
 
 ```text
 python3 "<skill-directory>/scripts/lint_latex.py" draft.md
 cat draft.md | python3 "<skill-directory>/scripts/lint_latex.py"
 ```
 
-Resolve `<skill-directory>` as the directory containing this `SKILL.md`; never hard-code an installation path. Use another Python 3 launcher (`python`, `py -3`) if `python3` is unavailable.
+Resolve `<skill-directory>` as the directory containing this `SKILL.md`; never hard-code an installation path. Use another Python 3 launcher (`python`, `py -3`) if `python3` is unavailable. Do not lint a separately assembled formula list: the lint input must contain the same math blocks and line breaks that will be sent. If writing a draft file is unavailable, pipe the exact final Markdown to the linter; after it passes, do not reflow or edit its formulas.
 
-The linter extracts math spans (skipping code blocks, as the renderer does) and flags the failure modes above: `\left{`-class delimiter errors, unescaped `%`, bare `&`, inline `\tag`, unsupported commands and environments, unbalanced braces, Setext hazards. A Setext line **inside** a formula is an error (it corrupts what the renderer receives); outside a formula it is a warning. When Node.js with the `katex` package is installed, it additionally renders every formula with `throwOnError` enabled for ground truth; otherwise it reports rule-based results only. Fix every error before sending.
+The linter extracts math spans (skipping code blocks, as the renderer does) and flags the failure modes above: bare `\left{`-class delimiter errors, Markdown-fragile `\left\{` / `\right\}` spellings, unescaped `%`, bare `&`, inline `\tag`, unsupported commands and environments, unbalanced braces, Setext hazards. A Setext line **inside** a formula is an error (it corrupts what the renderer receives); outside a formula it is a warning. When Node.js with the `katex` package is installed, it additionally renders every formula with `throwOnError` enabled for ground truth; otherwise it reports rule-based results only. Fix every error before sending.

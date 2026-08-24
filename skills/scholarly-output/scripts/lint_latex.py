@@ -42,6 +42,7 @@ UNSUPPORTED_ENV_RE = re.compile(
     r"description|document|center|minipage)\}"
 )
 BAD_LR_DELIM_RE = re.compile(r"\\(?:left|right)\s*[{}]")
+MARKDOWN_BRACE_ESCAPE_RE = re.compile(r"\\(?:left|right|middle)\s*\\[{}]")
 UNESCAPED_PERCENT_RE = re.compile(r"(?<!\\)%")
 BARE_AMP_RE = re.compile(r"(?<!\\)&")
 TAG_RE = re.compile(r"\\tag\*?\s*\{")
@@ -81,7 +82,12 @@ def check_span(text, start, end, latex, display, inline_kind):
     m = BAD_LR_DELIM_RE.search(latex)
     if m:
         add(line, "error",
-            "bare brace after \\left/\\right; write \\left\\{ \\right\\}",
+            "bare brace after \\left/\\right; write \\left\\lbrace ... \\right\\rbrace",
+            snippet)
+    if MARKDOWN_BRACE_ESCAPE_RE.search(latex):
+        add(line, "error",
+            "Paseo Markdown can consume \\{ / \\} before DOM rendering; "
+            "write \\left\\lbrace ... \\right\\rbrace instead",
             snippet)
     if latex.count("\\left") != latex.count("\\right"):
         add(line, "error", "unpaired \\left / \\right", snippet)
