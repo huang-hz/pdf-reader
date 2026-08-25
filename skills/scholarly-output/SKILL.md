@@ -21,7 +21,7 @@ Derived from the renderer; see `COMPATIBILITY.md` at the repository root for the
 
 ### KaTeX-safe LaTeX
 
-- **Brace transport rule (highest priority).** For an ordinary set or any other visible pair of braces, write `\lbrace ... \rbrace` directly. Do **not** put `\left` or `\right` around those braces, even though TeX would normally allow it. In this chat pipeline, all four spellings `\left{`, `\right}`, `\left\{`, and `\right\}` are forbidden: the first pair is invalid TeX, and Markdown can turn the second pair into the first before KaTeX sees it. Use these source forms exactly:
+- **Brace transport rule (highest priority).** For an ordinary set or any other visible pair of braces, write `\lbrace ... \rbrace` directly. Do **not** put `\left` or `\right` around those braces, even though TeX would normally allow it. Never emit `\{` or `\}` for visible braces either. In this chat pipeline, all six spellings `\{`, `\}`, `\left{`, `\right}`, `\left\{`, and `\right\}` are forbidden: the bare `\left` / `\right` forms are invalid TeX, and Markdown can strip the brace escape from the other forms before KaTeX sees them. Use these source forms exactly:
   ```text
   $$
   (\mathcal{P}c)(y)\in\lbrace \frac{c}{2},c,\frac{3c}{2}\rbrace.
