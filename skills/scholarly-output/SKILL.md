@@ -21,7 +21,18 @@ Derived from the renderer; see `COMPATIBILITY.md` at the repository root for the
 
 ### KaTeX-safe LaTeX
 
-- `\left` and `\right` must pair, and the token immediately after each must be a valid delimiter. For visible braces, prefer `\left\lbrace ... \right\rbrace` (or `\left. ... \right\rbrace` on one side). `\left{` is a syntax error — a bare `{` is a grouping character, not a delimiter. Although `\left\{ ... \right\}` is valid TeX, Paseo Markdown can consume the brace escape before DOM rendering; source output must use `\lbrace` / `\rbrace` instead.
+- **Brace transport rule (highest priority).** For an ordinary set or any other visible pair of braces, write `\lbrace ... \rbrace` directly. Do **not** put `\left` or `\right` around those braces, even though TeX would normally allow it. In this chat pipeline, all four spellings `\left{`, `\right}`, `\left\{`, and `\right\}` are forbidden: the first pair is invalid TeX, and Markdown can turn the second pair into the first before KaTeX sees it. Use these source forms exactly:
+  ```text
+  $$
+  (\mathcal{P}c)(y)\in\lbrace \frac{c}{2},c,\frac{3c}{2}\rbrace.
+  $$
+  ```
+  ```text
+  $$
+  \lbrace 0,\theta,2\theta,\ldots,(2^T-1)\theta\rbrace.
+  $$
+  ```
+- `\left` and `\right` must pair, and the token immediately after each must be a valid delimiter. Use them only where dynamic sizing is genuinely needed with a non-brace delimiter, or use `\left. ... \right\rbrace` for a one-sided construct.
 - Escape percent as `\%` inside math. The renderer auto-fixes `1.56%`, but do not rely on it.
 - A bare `&` is invalid outside an alignment environment (`aligned`, `gathered`, `cases`, `split`, `array`, `matrix` and its variants). Use an environment, or `\mathbin{\&}` for a literal ampersand operator.
 - Multi-character sub/superscripts need braces: `x_{ij}`, not `x_ij`.

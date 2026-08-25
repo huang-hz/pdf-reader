@@ -53,15 +53,19 @@ s[t+T_r]=s^*[t],\ \forall t
 \right\}.
 $$
 
-Safe rewrite with the operator attached (must pass):
+Safe rewrite: keep the operator attached and use direct transport-safe braces
+(must pass):
 
 $$
-\mathcal V_z=[-Z,Z]^T,
-\qquad
-\mathcal Z(T_r,\mathbf s^*) =
-\left\{
-\mathbf z\in\mathcal V_z
-\mid
-s[t+T_r]=s^*[t],\ \forall t
-\right\}.
+\mathcal Z(T_r,\mathbf s^*)=\lbrace \mathbf z\in\mathcal V_z\mid s[t+T_r]=s^*[t],\ \forall t\rbrace.
+$$
+
+## Case 5: the 2026-08-25 set-brace transport regression (must pass)
+
+$$
+(\mathcal{P}c)(y)\in\lbrace \frac{c}{2},c,\frac{3c}{2}\rbrace.
+$$
+
+$$
+\lbrace 0,\theta,2\theta,\ldots,(2^T-1)\theta\rbrace.
 $$
